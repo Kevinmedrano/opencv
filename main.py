@@ -4,36 +4,18 @@ Author: Grupo UC3M PIC
 Date: 02/12/2020
 """
 
-###############################################################
-#  Modulos
-###############################################################
-import cv2
-import os
-from statistics import mode
-import sys
-
-# importar modulos de pyQt
+# IMPORTAR MODULOS DE PYQT PARA LA INTERFACE GRAFICA
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QImage
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import QTimer
-# importar modulo opencv
-import cv2
+# IMPORTAR LOS CODIGOS GENERAMOS POR QT DESIGNER 
+from Main_UI import *
+# IMPORTAR MODULO DETECCION DE FIGURA CREADO
+from figura import *
 
-from main_window import *
-
-###############################################################
-# Variables
-###############################################################
-contador = 0
-intentos = []
-figuras = ["TRIANGULO","CUADRADO","RECTANGULO","PENTAGONO","EXAGONO","CIRCULO"]
-nomAux = "Nada"
-#NombreFigura = "Nada"
-
-def test():
-    print("Get Figure name")
+import random
 
 class MainWindow(QWidget):
     # clase constructor
@@ -42,87 +24,110 @@ class MainWindow(QWidget):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
-
+        self.tipo ="aprender"
         # crear un timer
         self.timer = QTimer()
-        self.NombreFigura = "Nada"
+        self.NombreFigura = "No hay Figura"
         
         # llamar a funcion viewCam cada vez que termina temporizar
         self.timer.timeout.connect(self.viewCam)
         
         # set control_bt callback clicked  function
         self.ui.btnIniciar.clicked.connect(self.controlTimer)
-
+        
+        self.ui.btnInt1.clicked.connect(self.Intento1)
+        self.ui.btnInt2.clicked.connect(self.Intento2)
+        self.ui.btnInt3.clicked.connect(self.Intento3)
+        
+        self.ui.btnInt1.setEnabled(False)
+        self.ui.btnInt2.setEnabled(False)
+        self.ui.btnInt3.setEnabled(False)
+        self.intentos =0
+        self.valor = 0
+        self.puntaje = 0
+           
+        
     # Ver camara
-    
     def viewCam(self):
+        #test()
         # read image in BGR format
         _, image = self.cap.read()
-        #Conversion a Escala de Grises
-        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
         
-        #Aplicando filtros
-        gray = cv2.GaussianBlur(gray,(3,3),0)
-        edged = cv2.Canny(gray,50,150)
-        edged = cv2.dilate(edged, None, iterations=1)
-        edged = cv2.erode(edged, None, iterations=1)
-        
-        #Operaciones Morfologicas Cierre
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
-        closed = cv2.morphologyEx(edged,cv2.MORPH_CLOSE,kernel,iterations=3)
-
-        #cv2.imshow("Closed",closed)
-        #Encontrar contornos
-        _,cnts,_= cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        #_,cnts,_= cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        for c in cnts:
-            epsilon = 0.01*cv2.arcLength(c,True)
-            approx = cv2.approxPolyDP(c,epsilon,True)
-            x,y,w,h = cv2.boundingRect(approx)
-            area = cv2.contourArea(c)
-            if(area>1600):
-                if len(approx)==3:
-                    cv2.drawContours(image, [approx], 0, (0,255,0),2)
-                    intentos.append(0)
+        self.NombreFigura = getFigureName(image)
+        #print(self.NombreFigura)
+        if self.NombreFigura!= "No hay Figura" and self.tipo=="adivinar": 
+            self.timer.stop()
+            # release video capture
+            #self.cap.release()
+            #print(self.NombreFigura)
+            self.valor = random.randint(1, 3)
+            self.intentos +=1
+            if self.intentos == 1:
+                if self.valor == 1:
+                    self.ui.rbInt1op1.setText(self.NombreFigura)
+                    figNameInt1op2,figNameInt1op3 = getFigureRandom(self.NombreFigura,1)
+                    self.ui.rbInt1op2.setText(figNameInt1op2)
+                    self.ui.rbInt1op3.setText(figNameInt1op3)
                     
-                if len(approx)==4:
-                    cv2.drawContours(image, [approx], 0, (0,255,0),2)
-                    aspect_ratio = float(w)/h
-                    if aspect_ratio == 1:
-                        intentos.append(1)
-                    else:
-                        intentos.append(2)
+                if self.valor == 2:
+                    self.ui.rbInt1op2.setText(self.NombreFigura)
+                    figNameInt1op1,figNameInt1op3 = getFigureRandom(self.NombreFigura,2)
+                    self.ui.rbInt1op1.setText(figNameInt1op1)
+                    self.ui.rbInt1op3.setText(figNameInt1op3)
                     
-                if len(approx)==5:
-                    intentos.append(3)
-                    cv2.drawContours(image, [approx], 0, (0,255,0),2)
+                if self.valor == 3:
+                    self.ui.rbInt1op3.setText(self.NombreFigura)
+                    figNameInt1op2,figNameInt1op1 = getFigureRandom(self.NombreFigura,3)
+                    self.ui.rbInt1op2.setText(figNameInt1op2)
+                    self.ui.rbInt1op1.setText(figNameInt1op1)
+                    
+            if self.intentos == 2:
+                if self.valor == 1:
+                    self.ui.rbInt2op1.setText(self.NombreFigura)
+                    figNameInt2op2,figNameInt2op3 = getFigureRandom(self.NombreFigura,1)
+                    self.ui.rbInt2op2.setText(figNameInt2op2)
+                    self.ui.rbInt2op3.setText(figNameInt2op3)
+                    
+                if self.valor == 2:
+                    self.ui.rbInt2op2.setText(self.NombreFigura)
+                    figNameInt2op1,figNameInt2op3 = getFigureRandom(self.NombreFigura,2)
+                    self.ui.rbInt2op1.setText(figNameInt2op1)
+                    self.ui.rbInt2op3.setText(figNameInt2op3)
                 
-                if len(approx)==6:
-                    intentos.append(4)
-                    cv2.drawContours(image, [approx], 0, (0,255,0),2)
+                if self.valor == 3:
+                    self.ui.rbInt2op3.setText(self.NombreFigura)
+                    figNameInt2op2,figNameInt2op1 = getFigureRandom(self.NombreFigura,3)
+                    self.ui.rbInt2op2.setText(figNameInt2op2)
+                    self.ui.rbInt1op1.setText(figNameInt2op1)
+            if self.intentos == 3:
+                if self.valor == 1:
+                    self.ui.rbInt3op1.setText(self.NombreFigura)
+                    figNameInt3op2,figNameInt3op3 = getFigureRandom(self.NombreFigura,1)
+                    self.ui.rbInt3op2.setText(figNameInt3op2)
+                    self.ui.rbInt3op3.setText(figNameInt3op3)
                 
-                if len(approx)>10:
-                    intentos.append(5)
-                    cv2.drawContours(image, [approx], 0, (0,255,0),2)
-                    
-            if(len(intentos) >=12):
-                #print("Figura detectada")
-                try:
-                    self.NombreFigura = figuras[mode(intentos)]
-                    #break
-                except Exception:
-                    #print("Error estadistico")
-                    pass
-                intentos[:] = []
-        
-        self.ui.lblResultado.setText(self.NombreFigura)
+                if self.valor == 2:
+                    self.ui.rbInt3op2.setText(self.NombreFigura)
+                    figNameInt3op1,figNameInt3op3 = getFigureRandom(self.NombreFigura,2)
+                    self.ui.rbInt3op1.setText(figNameInt3op1.lower())
+                    self.ui.rbInt3op3.setText(figNameInt3op3.lower())
+                
+                if self.valor == 3:
+                    self.ui.rbInt3op3.setText(self.NombreFigura)
+                    figNameInt3op2,figNameInt3op1 = getFigureRandom(self.NombreFigura,3)
+                    self.ui.rbInt3op2.setText(figNameInt3op2.lower())
+                    self.ui.rbInt3op1.setText(figNameInt3op1.lower())
+                print(figNameInt2op1+" - "+ figNameInt2op2+" - "+figNameInt2op3)
+        if self.tipo == "aprender" and self.NombreFigura != "No hay Figura":
+            self.ui.lblResultadoA.setText(self.NombreFigura)    
         # convert image to RGB format
         imagenEscalada = cv2.resize(image,(640,480), interpolation=cv2.INTER_CUBIC)
         image = cv2.cvtColor(imagenEscalada, cv2.COLOR_BGR2RGB)
+        
         # get image infos
         height, width, channel = image.shape
         step = channel * width
+        
         # create QImage from image
         qImg = QImage(imagenEscalada.data, width, height, step, QImage.Format_RGB888)
         # show image in img_label
@@ -130,16 +135,29 @@ class MainWindow(QWidget):
 
     # start/stop timer
     def controlTimer(self):
+        self.ui.lblResultadoB.setText("**********")
+        self.ui.lblResultadoA.setText("**********")
+        if self.ui.rbAprender.isChecked():
+            self.tipo ="aprender"
+            
+        if self.ui.rbAdivinar.isChecked():
+            self.tipo ="adivinar"
+            self.ui.btnInt1.setEnabled(True)
+            
         # if timer is stopped
         if not self.timer.isActive():
             # create video capture
             self.cap = cv2.VideoCapture(0)
             # start timer
-            self.timer.start(1)
+            self.timer.start(0)
             # update control_bt text
-            self.ui.btnIniciar.setText("PARAR")
+            self.ui.btnIniciar.setText("PARAR - REINICIAR")
         # if timer is started
         else:
+            self.ui.btnInt1.setEnabled(False)
+            self.ui.btnInt2.setEnabled(False)
+            self.ui.btnInt3.setEnabled(False)
+            self.intentos = 0;
             # stop timer
             self.timer.stop()
             # release video capture
@@ -147,12 +165,60 @@ class MainWindow(QWidget):
             # update control_bt text
             self.ui.btnIniciar.setText("EMPEZAR")
 
-test()
-
-
+    def Intento1(self):
+        self.ui.btnInt1.setEnabled(False)
+        self.ui.btnInt2.setEnabled(True)
+        if self.valor == 1 and self.ui.rbInt1op1.isChecked():
+            self.puntaje += 1
+        if self.valor == 2 and self.ui.rbInt1op2.isChecked():
+            self.puntaje += 1
+        if self.valor == 3 and self.ui.rbInt1op3.isChecked():
+            self.puntaje += 1
+        
+        self.timer.start(0)
+        
+    def Intento2(self):
+        self.ui.btnInt2.setEnabled(False)
+        self.ui.btnInt3.setEnabled(True)
+        if self.valor == 1 and self.ui.rbInt2op1.isChecked():
+            self.puntaje += 1
+        if self.valor == 2 and self.ui.rbInt2op2.isChecked():
+            self.puntaje += 1
+        if self.valor == 3 and self.ui.rbInt2op3.isChecked():
+            self.puntaje += 1
+        
+        self.timer.start(0)
+    
+    def Intento3(self):
+        self.ui.btnInt3.setEnabled(False)
+        
+        if self.valor == 1 and self.ui.rbInt3op1.isChecked():
+            self.puntaje += 1
+        if self.valor == 2 and self.ui.rbInt3op2.isChecked():
+            self.puntaje += 1
+        if self.valor == 3 and self.ui.rbInt3op3.isChecked():
+            self.puntaje += 1
+        #print("Resultado: "+str(self.puntaje))
+        if self.puntaje == 3:
+            self.ui.lblResultadoB.setText("Excelente Intento 3 de 3")
+        if self.puntaje == 2:
+            self.ui.lblResultadoB.setText("Buen Intento 2 de 3")
+        if self.puntaje == 1:
+            self.ui.lblResultadoB.setText("Intento Regular 1 de 3")
+        if self.puntaje == 0:
+            self.ui.lblResultadoB.setText("Sigue Aprendiendo 0 de 3")
+        
+        self.intentos = 0
+        self.puntaje = 0
+        
+        #print("Result")
+        #self.ui.btnInt2.setEnabled(True)
+    
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     # create and show mainWindow
     mainWindow = MainWindow()
     mainWindow.show()
+    
     sys.exit(app.exec_())
+    
